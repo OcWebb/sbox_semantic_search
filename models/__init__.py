@@ -1,2 +1,2 @@
-from .PineconeVector import PineconeVector
-from .SearchRequest import SearchRequest
+from .pinecone_vector import PineconeVector
+from .search_request import SearchRequest
