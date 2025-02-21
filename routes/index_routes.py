@@ -2,7 +2,7 @@ from typing import List
 from fastapi import APIRouter, Depends
 from services import PineconeService, OpenAiService, FacepunchService
 from dependencies import get_pinecone_service, get_openai_service, get_facepunch_service
-from utils import get_embed_string, get_pinecone_vector_from_package
+from utils import from_timestamp, get_embed_string, get_pinecone_vector_from_package, to_timestamp
 from auth import verify_api_key
 
 router = APIRouter(prefix="/index")
@@ -53,3 +53,47 @@ def index_update(
         return {
             "message": f"Indexed {len(vectors)} packages with {tokens} tokens, cost ${openai_service.token_cost(tokens)}"
         }
+
+
+def fetch_newly_updated_packages(
+        pinecone_service: PineconeService,
+        facepunch_service: FacepunchService) -> list[dict]:
+    TAKE = 100
+    most_recent = pinecone_service.fetch_recently_updated_packages(1)[0]
+    most_recent_timestamp = most_recent.metadata['Updated']
+    facepunch_recent = facepunch_service.fetch_recently_updated_packages(TAKE, 0)
+
+    iteration = 0
+    while to_timestamp(facepunch_recent[-1]['Updated']) > most_recent_timestamp and iteration < 10:
+        iteration += 1
+        facepunch_recent = facepunch_service.fetch_recently_updated_packages(TAKE, TAKE*iteration)
+
+    if iteration == 10:
+        return []
+    
+    packages_newer_than_most_recent = [x for x in facepunch_recent if to_timestamp(x['Updated']) > most_recent_timestamp]
+    packages_newer_than_most_recent.sort(key=lambda x: to_timestamp(x['Updated']), reverse=True)
+
+    return packages_newer_than_most_recent
+
+
+def fetch_newly_created_packages(
+        pinecone_service: PineconeService, 
+        facepunch_service: FacepunchService) -> list[dict]:
+    TAKE = 100
+    most_recent = pinecone_service.fetch_recently_created_packages(1)[0]
+    most_recent_timestamp = most_recent.metadata['Created']
+    facepunch_recent = facepunch_service.fetch_recently_created_packages(TAKE, 0)
+
+    iteration = 0
+    while to_timestamp(facepunch_recent[-1]['Created']) > most_recent_timestamp and iteration < 10:
+        iteration += 1
+        facepunch_recent = facepunch_service.fetch_recently_created_packages(TAKE, TAKE*iteration)
+
+    if iteration == 10:
+        return []
+    
+    packages_newer_than_most_recent = [x for x in facepunch_recent if to_timestamp(x['Created']) > most_recent_timestamp]
+    packages_newer_than_most_recent.sort(key=lambda x: to_timestamp(x['Created']), reverse=True)
+
+    return packages_newer_than_most_recent
