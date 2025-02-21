@@ -9,4 +9,4 @@ COPY . .
 
 EXPOSE 4000
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "4000", "--proxy-headers"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "4000", "--proxy-headers", "--forwarded-allow-ips", "*"]
