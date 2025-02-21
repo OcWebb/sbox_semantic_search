@@ -12,7 +12,7 @@ app.include_router(index_routes.router)
 app.include_router(search_routes.router)
 
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=["*"])
-app.add_middleware(HTTPSRedirectMiddleware)
+# app.add_middleware(HTTPSRedirectMiddleware)
 app.add_middleware(GZipMiddleware)
 
 if __name__ == "__main__":
