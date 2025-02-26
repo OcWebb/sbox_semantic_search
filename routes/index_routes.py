@@ -42,6 +42,10 @@ def index_update(
 ) -> dict:
     new_packages = fetch_newly_updated_packages(pinecone_service, facepunch_service)
     new_packages += fetch_newly_created_packages(pinecone_service, facepunch_service)
+
+    if not new_packages:
+        return {"message": "No new packages to index"}
+
     embed_strings = [get_embed_string(package) for package in new_packages]
     embeddings_list, tokens = openai_service.get_embeddings(embed_strings)
     
